@@ -1,0 +1,9 @@
+---
+- name: ensure nginx is at the absent version
+  apt: pkg={{ item }} state=absent update_cache=yes
+  with_items:
+    - nginx
+  sudo: yes
+    
+- name: ensure nginx service is stopped
+  service: name=nginx state=stopped

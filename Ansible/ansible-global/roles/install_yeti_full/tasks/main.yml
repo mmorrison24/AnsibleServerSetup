@@ -1,0 +1,196 @@
+- name: ensure yetishare needed software is present
+  apt: name={{ item }} state=present
+  with_items:
+  - curl
+  - libcurl3
+  - libcurl4-openssl-dev
+  - php5-curl
+
+- name: ensure default www directory exists
+  file: path={{ document_root }} state=directory
+
+#this will be skipped if the repo exists
+#- name: check if git repo exists in {{ document_root }}/
+#  file: path={{ document_root }}.git/config state=file
+#  register: result
+#  ignore_errors: yes
+#  tags:
+#    - git
+#    - deploy    
+#- name: remove document_root if there is no git repo
+#  shell: rm -r {{ document_root }}
+#  when: result|failed
+#  tags:
+#    - git
+#    - deploy  
+#- name: setup git repo and pull latest code
+#  git: repo=git@{{git_repo_ip}}:code_yeti.git dest={{ document_root }} update=yes accept_hostkey=yes
+#  tags:
+#   - git
+#   - deploy
+
+#copy code from git repo to {{ document_root }}
+- name: copy code-yeti files to {{ document_root }}
+#  synchronize: src=/src/videoproject/Code/code-yeti dest={{ document_root }} set_remote_user=false
+  shell: cp -r /src/videoproject/Code/code-yeti/* {{ document_root }} 
+  sudo: yes
+  tags:
+   - yetishare
+   - install
+   - deploy
+ 
+- name: Yeti | configure .config.inc.php
+  template: src=_config.inc.php.j2 dest={{document_root}}/_config.inc.php mode=0755 owner=www-data group=www-data
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: Yeti | configure .htaccess
+  template: src=.htaccess.j2 dest={{document_root}}/.htaccess mode=0644
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: bitcoin plugin $mysite_root variable
+  lineinfile: >
+     dest={{document_root}}/plugins/bitcoin/include.php
+     regexp='\$mysite_root'
+     line='$mysite_root = \"http://{{main_hostname}}/\";'
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: bitcoin plugin $secet variable
+  lineinfile: >
+     dest={{document_root}}/plugins/bitcoin/include.php
+     regexp='\$secret'
+     line='$secret = \"{{bitcoin_plugin_secret}}\";'
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: bitcoin plugin $my_bitcoin_address variable
+  lineinfile: >
+     dest={{document_root}}/plugins/bitcoin/include.php
+     regexp='\$my_bitcoin_address'
+     line='$my_bitcoin_address = \"{{bitcoin_wallet}}\";'
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: change permissions on yetishare files
+  file: path={{document_root}}/{{ item }}  mode=0755 owner=www-data group=www-data
+  with_items: 
+     - _config.inc.php
+     - plugins/     
+  ignore_errors: yes   
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: change permissions on yetishare files
+  file: path={{document_root}}/{{ item }}  mode=0755 owner=www-data group=www-data state=directory
+  with_items: 
+     - files/
+  ignore_errors: yes       
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+
+- shell: python -c "import time; ts = time.time(); import sys; import datetime; st = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d_%H-%M-%S'); print st"
+  register: timestamp
+
+# Create a new database with name 'bobdata'
+#- mysql_db: name=bobdata state=dump #login_password={{mysql_root_password}} login_user={{mysql_root_username}} target=~/home/db{{timestamp}}.sql
+#would like to dump database if it exists ....
+#SHOW DATABASES LIKE '{{yeti_db_name}}';
+- mysql_db: name={{yeti_db_name}} login_user={{mysql_root_username}} login_password={{mysql_root_password}} state=present
+- mysql_db: name={{yeti_db_name}} login_user={{mysql_root_username}} login_password={{mysql_root_password}} state=dump target=db{{timestamp.stdout}}.sql
+
+- name: wipe database for import. drop db, then add it
+  mysql_db: name={{yeti_db_name}} login_user={{mysql_root_username}} login_password={{mysql_root_password}} state=absent
+- mysql_db: name={{yeti_db_name}} login_user={{mysql_root_username}} login_password={{mysql_root_password}} state=present
+
+- name: change database name in sql statement we are about to import
+  lineinfile: >
+     dest={{document_root}}/offline/database.sql
+     regexp="INSERT INTO site_config VALUES \(\'7\', \'site_name\'"
+     line="INSERT INTO site_config VALUES ('7', 'site_name', '{{ main_sitename }}', 'Site name', '', 'string', 'Page Options');"
+     backrefs=yes
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: Yeti import db
+  mysql_db: name={{yeti_db_name}} login_user={{mysql_root_username}} login_password={{mysql_root_password}} state=import target={{document_root}}/offline/database.sql
+
+- name: create yetishare db user
+  mysql_user: name={{yeti_db_username}} password={{yeti_db_password}} host={{ item }} priv=*.*:ALL
+  with_items:
+    - "{{ansible_hostname}}"
+    - 127.0.0.1
+    - ::1
+    - '%'
+    - localhost
+
+- name: disable mysql external db directory locking 
+  lineinfile: dest=/etc/mysql/my.cnf
+     regexp='skip-external-locking'
+     line='#skip-external-locking'
+
+- name: disable mysql external db directory locking 
+  lineinfile: dest=/etc/mysql/my.cnf
+     regexp='bind-address'
+     line='#bind-address    = 127.0.0.1'
+
+- name: reStart the MySQL service
+  action: service name=mysql state=restarted
+  tags:
+    - yetishare
+    - verify-state
+
+
+#if you do not remove the config, might have speed issues.
+- name: Yeti | remove configure directory
+  #action: command mkdir {{ document_root }}
+  action: file path={{ document_root }}/install state=absent
+
+
+##
+# Apache2 setup.
+#
+- name: Apache | Enable some required modules
+  action: command a2enmod rewrite vhost_alias
+  tags: common
+
+- name: Apache | Configuration file for yetishare
+  action: template src=etc-apache2-sites-available-yetiscript.j2 dest=/etc/apache2/sites-available/yetishare.conf
+  tags: common
+
+- name: insure apache is listening on the correct port in ports.conf
+  template: src=ports.conf.j2 dest=/etc/apache2/ports.conf
+
+- name: Apache | Disable the default site
+  action: command a2dissite {{ item }}
+  with_items:
+    - 000-default
+    - default  
+  tags: common
+  ignore_errors: yes
+
+- name: Apache | Enable our new site
+  action: command a2ensite yetishare
+  tags: common
+
+
+- name: ensure Apache service is restarted
+  service: name=apache2 state=reloaded

@@ -1,0 +1,5 @@
+#!/bin/sh
+GIT_WORK_TREE=/src/ansibleplaybooks/overlord git checkout -f
+echo updated overlord playbook
+ansible-playbook /src/ansibleplaybooks/overlord/site-overlord.yml
+exit 0 #nothing should stop a push

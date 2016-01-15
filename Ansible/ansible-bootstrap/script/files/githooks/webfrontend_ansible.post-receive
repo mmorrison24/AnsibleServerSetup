@@ -1,0 +1,4 @@
+#!/bin/sh
+GIT_WORK_TREE=/src/ansibleplaybooks/srvrfile git checkout -f
+echo updated srvrfile playbook
+#ansible-playbook /src/ansibleplaybooks/srvrfile/site.yml

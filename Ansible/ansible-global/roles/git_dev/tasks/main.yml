@@ -1,0 +1,52 @@
+---
+ #setup git enviroment
+  - name: ensure git is at the latest version
+    apt: pkg=git state=latest
+    tags:
+      - gitdev
+      - install
+
+  - name: create gitdev user to interact with main git server
+    user: name=gitdev state=present createhome=yes shell=/bin/bash generate_ssh_key=yes comment=Gitdeveloper 
+    tags:
+      - gitdev
+      - install
+
+  - name: copy default standard git keys to proper place
+    copy: src=gitdev_keys/ dest=~/.ssh/ owner=root mode=600
+    tags:
+      - gitdev
+      - install
+
+  - name: Set some kernel parameters
+    lineinfile:
+      dest=~/.ssh/config
+      regexp="{{ item.regexp|default(omit) }}"
+      line="{{ item.line|default(omit) }}"
+      #insertafter="{{ item.insertafter|default(omit) }}"
+    with_items:
+      - { regexp: '    HostName xxx.xxx.xxx.xxx', line: '    HostName {{git_repo_ip}}'  }
+      - { regexp: 'Host xxx.xxx.xxx.xxx', line: 'Host {{git_repo_ip}}' }
+    tags:
+      - gitdev
+      - install
+
+  - name: grab gitserver's public key
+    shell: ssh-keyscan {{git_repo_ip}}
+    register: gitServerPubKey
+    changed_when: False
+    tags:
+      - gitdev
+      - install
+
+  - name: insure that the gitserver's public key is in known_hosts
+    lineinfile: dest=~/.ssh/known_hosts line="{{gitServerPubKey.stdout}}" create=yes
+    sudo_user: gitdev 
+    tags:
+      - gitdev
+      - install
+
+## copy our GitDev key to the authorized key of our main git repository
+#  - name: copy authorized keys for git ops with standard defaults if file DNE
+#    copy: src=files/gitserver_main.authorized_keys dest=/var/git/.ssh/authorized_keys force=no owner=git group=git mode=700
+#    sudo_user: git

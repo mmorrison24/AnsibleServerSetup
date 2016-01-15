@@ -1,0 +1,15 @@
+---
+- name: add special node.js ppa
+  apt_repository: repo='ppa:chris-lea/node.js'
+  sudo: yes
+
+- name: ensure nodejs is at the latest version
+  apt: pkg={{ item }} state=latest update_cache=yes
+  with_items:
+    - nodejs
+  sudo: yes
+    
+- name: install any node related npm packages
+  npm: name={{ item }} global=yes
+  with_items:
+   - forever

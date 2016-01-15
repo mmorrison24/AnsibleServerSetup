@@ -1,0 +1,17 @@
+#give each master server an alias, which will allow us to define variables in another file
+[master_servers]
+host_master_exmpl ansible_connection=local ansible_ssh_user=user ansible_ssh_pass=password
+
+#now we use the group of servers defined above within our playlists
+[bootstrapable:children]
+master_servers
+
+[apache_servers:children]
+master_servers
+
+[host_yeti:children]
+master_servers
+
+[nodejs_servers:children]
+master_servers
+

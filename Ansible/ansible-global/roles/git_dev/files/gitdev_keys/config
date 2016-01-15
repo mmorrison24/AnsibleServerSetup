@@ -1,0 +1,6 @@
+Host xxx.xxx.xxx.xxx
+    HostName xxx.xxx.xxx.xxx
+    Port 22
+    User git
+    PreferredAuthentications publickey
+    IdentityFile ~/.ssh/id_rsa.gitdev

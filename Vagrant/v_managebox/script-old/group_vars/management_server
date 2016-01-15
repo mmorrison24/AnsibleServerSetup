@@ -1,0 +1,9 @@
+---
+git_repos:
+#   - webfrontend_code
+#   - webfrontend_ansible
+#   - overlord_code
+#   - overlord_ansible
+#   - srvrfile_code
+#   - srvrfile_ansible
+   - global_ansible

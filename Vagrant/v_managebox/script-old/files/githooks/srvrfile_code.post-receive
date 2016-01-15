@@ -1,0 +1,4 @@
+#!/bin/sh
+#GIT_WORK_TREE=/src/ansibleplaybooks/frontend git checkout -fe
+#echo updated webfrontend - code playbook
+ansible-playbook /src/ansibleplaybooks/srvrfile/site.yml --tags "deploy"

@@ -1,0 +1,117 @@
+---
+ - name: ensure PHP PPA is enabled
+   apt_repository: repo='ppa:ondrej/php5'
+   tags:
+    - php
+    - install
+
+ - name: ensure required PHP extensions are installed
+   apt: name={{ item }} state=present
+   with_items:
+     - php-console-table
+     - php-pear
+     - php5-cli
+     - php5-common
+     - php5-curl
+     - php5-dev
+     - php5-fpm
+     - php5-gd
+     - phpmyadmin
+     - php5-intl
+     - php5-json
+     - php5-mcrypt
+     - php5-mysql
+#     - php5-xdebug
+     - libapache2-mod-php5
+   tags:
+    - php
+    - install     
+ 
+ - name: set PHP .ini timezone config (web)
+   lineinfile: dest={{ item }}php.ini
+                regexp='^date.timezone\s?='
+                line="date.timezone = \"US/Eastern\""
+   with_items:
+        - /etc/php5/apache2/
+        - /etc/php5/cli/
+   tags:
+    - php
+    - verify-state
+
+ 
+ - name: set php.ini display_error to ON
+   lineinfile: dest=/etc/php5/apache2/php.ini
+               regexp='^display_errors\s?='
+               line="display_errors = Off"
+   tags:
+    - php
+    - verify-state               
+ 
+# - name: set php.ini error_reporting to E_ALL
+#   lineinfile: dest=/etc/php5/apache2/php.ini
+#               regexp='^error_reporting\s?='
+#               line="error_reporting = E_ALL"
+ 
+# - name: ensure xdebug.max_nesting_level is ok for Symfony2
+#   lineinfile: dest=/etc/php5/mods-available/xdebug.ini
+#               regexp='^xdebug.max_nesting_level='
+#               line='xdebug.max_nesting_level=250'
+ 
+# - name: ensure xdebug.scream is enabled
+#   lineinfile: dest=/etc/php5/mods-available/xdebug.ini
+#               regexp='^xdebug.scream='
+#               line='xdebug.scream=1'
+ 
+# - name: ensure xdebug.cli_color is enabled
+#   lineinfile: dest=/etc/php5/mods-available/xdebug.ini
+#               regexp='^xdebug.cli_color='
+#               line='xdebug.cli_color=1'
+#   tags:
+#    - php
+#    - verify-state               
+ 
+# - name: ensure xdebug.show_local_vars is enabled
+#   lineinfile: dest=/etc/php5/mods-available/xdebug.ini
+#               regexp='^xdebug.show_local_vars='
+#               line='xdebug.show_local_vars=1'
+ 
+ #- name: ensure php.ini memory_limit is ok for Drupal 8
+ #  lineinfile: dest=/etc/php5/apache2/php.ini
+ #              regexp='^memory_limit\s?='
+ #              line='memory_limit = 256M'
+ 
+ - name: ensure mod_rewrite is enabled (required by most framework/cms)
+   command: /usr/sbin/a2enmod rewrite
+   tags:
+    - php
+    - verify-state   
+ 
+# - name: setup adminer
+#   get_url: url=http://www.adminer.org/latest.php dest=/var/www/adminer.php
+ 
+#we have had problems where this solution needs to be oput in place for Ubuntu 12.04
+#http://stackoverflow.com/questions/18282694/error-after-updating-apache-in-ubuntu-13-04
+#the location of this file changed....weird it now is at apache2.conf instead of /etc/apache2/httpd.conf
+ - name: ensure apache2's httpd file has a line that fixes a problem in 13.04 Ubuntu
+   lineinfile: dest=/etc/apache2/apache2.conf state=absent regexp=^LockFile\s?
+   ignore_errors: yes   
+   tags:
+    - php
+    - apache
+    - verify-state  
+
+ - name: ensure apache2's httpd file has a line that fixes a problem in 13.04 Ubuntu
+   lineinfile: "dest=/etc/apache2/httpd.conf line='Mutex file:${APACHE_LOCK_DIR} default'"
+   ignore_errors: yes
+   tags:
+    - php
+    - apache
+    - verify-state
+
+
+ - name: ensure Apache service is restarted
+   service: name=apache2 state=reloaded
+   tags:
+    - php
+    - verify-state 
+ 

@@ -1,0 +1,30 @@
+#this will be skipped if the repo exists
+- name: check if git repo exists for all code
+  file: path=/src/videoproject/.git/config state=file
+  register: isGitRepoExistant
+  ignore_errors: yes
+  tags:
+    - git
+    - deploy    
+- name: remove /src/videoproject if there is no git repo
+  shell: rm -r /src/videoproject
+  when: isGitRepoExistant|failed and sync_with_git
+  ignore_errors: yes
+  tags:
+    - git
+    - deploy  
+- name: setup git repo if dne and/or pull latest code
+  git: repo=git@{{git_repo_ip}}:{{git_repo_name}} dest=/src/videoproject/ update=yes accept_hostkey=yes
+  when: sync_with_git
+  tags:
+   - git
+   - deploy
+
+- name: retreive latest code from sync_dir variable
+  synchronize: src={{src_sync_dir}} dest=/src/videoproject/
+  when: not sync_with_git
+  sudo: yes
+  sudo_user: root
+  tags:
+   - git
+   - deploy  

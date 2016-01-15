@@ -1,0 +1,6 @@
+---
+git_repos:
+   - videoproject
+
+is_mastergitserver: false
+git_repo_ip: 131.72.132.211

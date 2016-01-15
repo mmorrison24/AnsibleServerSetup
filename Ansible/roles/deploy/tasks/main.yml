@@ -1,0 +1,181 @@
+#this will be skipped if the repo exists
+- name: check if git repo exists for all code
+  file: path=/src/videoproject/.git/config state=file
+  register: isGitRepoExistant
+  ignore_errors: yes
+  tags:
+    - git
+    - deploy    
+
+- name: remove /src/videoproject if there is no git repo
+  shell: rm -r /src/videoproject
+  when: isGitRepoExistant|failed and sync_with_git
+  ignore_errors: yes
+  tags:
+    - git
+    - deploy 
+     
+- name: setup git repo if dne and/or pull latest code
+  git: repo=git@{{git_repo_ip}}:videoproject.git dest=/src/videoproject/ update=yes accept_hostkey=yes
+  when: sync_with_git
+  tags:
+   - git
+   - deploy
+
+- name: retreive latest code from sync_dir variable
+  synchronize: src={{src_sync_dir}} dest=/src/videoproject/
+  when: not sync_with_git
+  sudo: yes
+  sudo_user: root
+  tags:
+   - git
+   - deploy  
+
+   #===========>
+
+   #copy code from git repo to {{ document_root }}
+- name: copy code-yeti files to {{ document_root }}
+#  synchronize: src=/src/videoproject/Code/code-yeti dest={{ document_root }} set_remote_user=false
+  shell: cp -r /src/videoproject/Code/code-yeti/* {{ document_root }} 
+  sudo: yes
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: Yeti | configure .config.inc.php
+  template: src=_config.inc.php.j2 dest={{document_root}}/_config.inc.php mode=0755 owner=www-data group=www-data
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: Yeti | configure .htaccess
+  template: src=.htaccess.j2 dest={{document_root}}/.htaccess
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: bitcoin plugin $mysite_root variable
+  lineinfile: >
+     dest={{document_root}}/plugins/bitcoin/include.php
+     regexp='\$mysite_root'
+     line='$mysite_root = \"http://{{main_hostname}}/\";'
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: bitcoin plugin $secet variable
+  lineinfile: >
+     dest={{document_root}}/plugins/bitcoin/include.php
+     regexp='\$secret'
+     line='$secret = \"{{bitcoin_plugin_secret}}\";'
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+- name: bitcoin plugin $my_bitcoin_address variable
+  lineinfile: >
+     dest={{document_root}}/plugins/bitcoin/include.php
+     regexp='\$my_bitcoin_address'
+     line='$my_bitcoin_address = \"{{bitcoin_wallet}}\";'
+  tags:
+   - yetishare
+   - install
+   - deploy\
+
+- name: change permissions on yetishare files
+  file: path={{document_root}}/{{ item }}  mode=0755 owner=www-data group=www-data
+  with_items: 
+     - _config.inc.php
+     - plugins/     
+  ignore_errors: yes   
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+
+#=================>
+
+- name: change permissions on yetishare files
+  file: path={{document_root}}/{{ item }}  mode=0755 owner=www-data group=www-data state=directory
+  with_items: 
+     - files/
+  ignore_errors: yes       
+  tags:
+   - yetishare
+   - install
+   - deploy
+
+   - name: "Check list of Node.js apps running."
+  command: forever list
+  register: forever_list
+  changed_when: false
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script
+
+- name: "NPM install into app directory"
+  npm: path={{ item }}
+  with_items:
+    - "{{ document_root }}/_reedemserver/"
+    - "{{ document_root }}/_searchserver/"
+    - "/src/videoproject/Code/code-overlord/manage-app2/"
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script
+
+- name: ensure inviteserver script has mysql credentials
+  template: src=settings_mysql.exld.j2 dest=/src/videoproject/Code/code-overlord/manage-app2/settings_mysql.exld owner=root mode=0600
+  sudo: yes
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script
+
+- name: ensure searchserver script has the correct ip address to allow connections into
+  lineinfile: >
+    dest={{ document_root }}/_searchserver/server.js
+    regexp=Access-Control-Allow-Origin
+    insertafter='Website you wish to allow to connect' 
+    line='  res.setHeader("Access-Control-Allow-Origin", "http://{{ main_hostname }}");'
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script
+
+- name: "restart searchserver if its already running to catch change in Access-Control-Allow-Origin header"
+  command: forever restartall
+  when: "forever_list.stdout.find('{{ item }}') > 0"
+  with_items:
+    - "{{ document_root }}/_searchserver/server.js"   
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script    
+
+
+- name: "Start Node.js apps ( forever start )"
+  command: forever start {{ item }}
+  when: "forever_list.stdout.find('{{ item }}') == -1"
+  with_items:
+    - "{{ document_root }}/_reedemserver/server.js"   
+    - "{{ document_root }}/_searchserver/server.js"   
+    - "/src/videoproject/Code/code-overlord/manage-app2/server.js"
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script
+

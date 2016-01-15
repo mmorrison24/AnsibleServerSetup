@@ -1,0 +1,58 @@
+#host_master.exld
+---
+main_sitename: website
+main_hostname: 192.168.222.129
+main_hostip: 192.168.222.129
+main_hosturl : http://192.168.222.129/
+
+apache_port: 80
+document_root: /var/www
+
+#src settings
+git_repo_ip: 131.72.136.211
+src_sync_dir: /src/videoproject
+sync_with_git: true
+
+#yetishare
+yeti_db_name: 'yetidb'
+yeti_db_username: 'yetidbuser'
+yeti_db_password: 'aSDDD545y^'
+
+yeti_script_zip: '/yeti/File_Hosting_Script_v3_3.zip'
+# apache
+apache_server_admin: 'webmaster@example.com'
+apache_server_alias: '*.*.example.com'
+
+# vsftpd
+vsftpd_anonymous_enable: 'NO'
+vsftpd_local_enable: 'YES'
+vsftpd_write_enable: 'YES'
+vsftpd_local_umask: '002'
+
+# mysql settings
+mysql_root_username: 'root'
+mysql_root_password: password
+
+#----yeti bitcoin plugin
+bitcoin_wallet: 19aVBDfnBSRVVBvVA928MjnHrKkQnesSYt
+bitcoin_plugin_secret: qwer1234
+bitcoin_plugin_siteroot: "http://192.168.222.129/"
+
+#---- megasync
+MEGA_USERNAME: user
+MEGA_PASSWORD: pass
+
+media_dir: /root/media
+mega_drives:
+  - mega_username: user
+    mega_password: pass
+    mount_point: dev/sda
+    incoming_dir: "/home/media/incoming/"
+    finalsync_dir: "/home/media/incoming/"
+
+mega_sync_ops:
+  sync_dir: /root/media
+  drive1:
+    mega_username: user
+    mega_password: pass
+    mount_point: dev/sda

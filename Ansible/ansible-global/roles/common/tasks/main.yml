@@ -1,0 +1,28 @@
+---
+- name: ensure some base packages are installed
+  apt: name={{ item }} state=present update_cache=yes
+  sudo: yes
+  with_items:
+    - ack-grep
+    - build-essential
+    - curl
+    - exuberant-ctags
+    - git
+    - ncurses-term
+    - python-software-properties
+    - vim
+    - wget
+    - fail2ban
+    - unzip
+    - python-pycurl
+    - nano
+#    - npm  #npm is installed automatically by the chris-lea ppa
+  ignore_errors: yes
+
+- name: Install fail2ban config
+  template: src=jail.local.j2 dest=/etc/fail2ban/jail.local
+  notify:
+    - reload_fail2ban
+
+
+

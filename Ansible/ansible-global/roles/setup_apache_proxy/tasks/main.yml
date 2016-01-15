@@ -1,0 +1,23 @@
+---
+- name: ensure apache is not running
+  service: name=apache2 state=stopped
+    
+- name: "install apache mod_proxy"
+  apt: pkg={{ item }} state=latest update_cache=yes
+  with_items:
+    - libapache2-mod-proxy-html
+    - libxml2-dev
+  sudo: yes  
+
+- name: Enable required modules for proxy
+  command: a2enmod proxy proxy_ajp proxy_http rewrite deflate headers proxy_balancer proxy_connect proxy_html
+  tags: common
+
+- name: ensure apache is running on port 80
+  lineinfile: dest=/etc/apache2/ports.conf regexp="Listen " line="Listen {{ apache_port }}"    
+
+- name: ensure apache site-default is running on port 80
+  lineinfile: "dest=/etc/apache2/sites-available/000-default.conf regexp='^<VirtualHost *:' line='<VirtualHost *: {{ apache_port }}>'"
+
+- name: ensure apache is running
+  service: name=apache2 state=started

@@ -1,0 +1,26 @@
+---
+ - name: create ~ ssh folder
+   file: name=~/.ssh state=directory recurse=yes owner=root group=root mode=700
+   sudo: yes
+   tags: bootstrap
+
+ - name: copy authorized keys for the current user, with standard defaults if file DNE
+   copy: src=authorized_keys dest=~/.ssh/authorized_keys force=no owner=root group=root mode=700
+   sudo: yes
+   tags: bootstrap
+
+ - name: ensure ssh will not ask to verify keys
+   lineinfile: dest=/etc/ssh/ssh_config line="StrictHostKeyChecking no"
+   sudo: yes
+   tags: bootstrap
+
+ - name: ensure apt is installed/updated and adequte
+   raw: "apt-get -y update"
+   ignore_errors: yes
+   sudo: yes
+   tags: bootstrap
+
+# - name: ensure python is installed and adequte
+#   apt: pkg=python update_cache=yes state=latest 
+#   sudo: yes
+#   tags: bootstrap

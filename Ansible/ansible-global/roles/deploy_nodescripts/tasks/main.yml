@@ -1,0 +1,25 @@
+- name: ensure cluster_config settings match ansible setup settings
+  template: src=cluster_config.json.j2 dest={{ src_sync_dir }}/Code/node_scripts/cluster_config.json owner=root mode=0600
+  sudo: yes
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script
+
+- name: "stopall node scripts so we can ensure only the current defined are running"
+  command: forever stopall
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script    
+
+
+- name: "Start Node.js apps ( using starup script )"
+  command: node startup.js chdir="{{ src_sync_dir }}/Code/node_scripts/startup"
+  tags:
+    - verify-state
+    - install
+    - deploy
+    - node_script

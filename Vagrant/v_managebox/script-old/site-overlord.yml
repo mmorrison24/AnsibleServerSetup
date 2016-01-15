@@ -1,0 +1,63 @@
+---
+- hosts: management_server
+  vars:
+    codesrc_directory: /src
+    git_homedir: /var/git
+    git_branch_to_use: master
+  tasks:
+#setup git enviroment
+  - name: ensure git is at the latest version
+    apt: pkg=git state=latest
+  - name: create git user to setup enviorment
+    user: name=git state=present createhome=yes home=/var/git shell=/bin/bash comment=Git 
+#    sudo: yes
+
+  - name: create git ssh folder
+    file: name=/var/git/.ssh state=directory recurse=yes owner=git group=git mode=700
+    sudo_user: git
+  - name: copy authorized keys for git ops with standard defaults if file DNE
+    copy: src=files/gitserver_main.authorized_keys dest=/var/git/.ssh/authorized_keys force=no owner=git group=git mode=700
+    sudo_user: git
+
+  - name: create ~ ssh folder
+    file: name=~/.ssh state=directory recurse=yes owner=root group=root mode=700
+    sudo_user: root
+#  - name: copy authorized keys for the current user, with standard defaults if file DNE
+#    copy: src=files/gitserver_main.authorized_keys dest=~/.ssh/authorized_keys force=no owner=root group=root mode=700
+#    sudo_user: root
+
+ #create/ensure code repositories exist
+  - name: create/ensure folder for repo
+    file: name=/var/git/{{ item }}.git state=directory owner=git group=git
+    sudo_user: git
+    with_items: git_repos
+    when: is_mastergitserver is defined and is_mastergitserver == "true"
+  - name: git init
+    command: git --bare init chdir=/var/git/{{ item }}.git creates=HEAD
+    sudo_user: git
+    with_items: git_repos
+    when: is_mastergitserver is defined and is_mastergitserver == "true"
+
+# find git hooks associated with repositories
+#used to bootstrap git-hooks  - file: path=githook.{{ item }}.post-receive state=touch
+#    with_items: git_repos
+  - name: fetch any pre-defined git-hooks and add them to our main bare repositories
+    copy: src=files/githooks/{{ item }}.post-receive dest=/var/git/{{ item }}.git/hooks/post-receive owner=git group=git mode=770
+    with_items: git_repos
+    ignore_errors: yes
+    when: is_mastergitserver is defined and is_mastergitserver == "true"    
+
+#make sure that our source repositories can be controled from the git user
+  - file: state=directory path={{ codesrc_directory }} owner=git group=git recurse=yes
+#    ignore_errors: yes # this can fail if .git subfolder has root permissions
+  - name: ensure ssh will not ask to verify keys
+    lineinfile: dest=/etc/ssh/ssh_config line="StrictHostKeyChecking no"
+  - name: ensure our git user has valid keys
+    copy: src=files/sshAdminKeys/ dest=/var/git/.ssh owner=git group=git mode=600
+  - name: ensure our root user has valid keys
+    copy: src=files/sshAdminKeys/ dest=/root/.ssh owner=root group=root mode=600 
+
+  - name: create/ensure folder for repo
+    git: repo=ssh://git@31.7.57.236/~/{{ item }}.git dest=/src/{{ item }}
+    sudo_user: git
+    with_items: git_repos

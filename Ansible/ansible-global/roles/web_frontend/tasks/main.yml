@@ -1,0 +1,41 @@
+---
+#grab website content from git repo
+
+# - name: check if /var/www is directory
+#   file: path=/var/www state=directory
+#   register: isWWWExistant
+#   ignore_errors: yes
+#   tags:
+#    - git
+#    - webfrontend
+#    - deploy   
+
+# - name: destroy /var/www
+#   file: path=/var/www state=absent
+#   when: isWWWExistant|success
+#   tags:
+#    - git
+#    - webfrontend
+#    - deploy
+
+# - name: create symlink for webcode to /var/www
+#   file: src=/src/videoproject/Code/code-webfrontend dest=/var/www state=link
+#   tags:
+#   - git
+#   - webfrontend
+#   - deploy
+
+ - name: copy webcode to /var/www
+   command: cp -r /src/project/Code/code-webfrontend {{ document_root }}
+   tags:
+   - git
+   - webfrontend
+   - deploy
+
+# - name: change permissions on yetishare files
+#   file: path=/var/www/{{ item }}  mode=0755 owner=root group=root
+#   with_items: 
+#     - _config.inc.php
+#   tags:
+#    - verify-state
+#    - deploy       

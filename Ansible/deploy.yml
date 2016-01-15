@@ -1,0 +1,6 @@
+---
+- name: configure servers that need to be setup
+  hosts: all
+  user: root
+  roles:
+    - deploy

@@ -1,0 +1,6 @@
+---
+git_repos:
+   - videoproject
+
+is_mastergitserver: false
+git_repo_ip: xxx.xx.xx.xx

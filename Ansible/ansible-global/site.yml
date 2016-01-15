@@ -1,0 +1,59 @@
+---
+# This playbook deploys the frontend stack 
+
+#- name: apply common configuration to all nodes
+#  hosts: all
+#  user: root
+
+#  roles:
+#    - common
+- name: configure servers that need to be setup
+  hosts: bootstrapable
+  user: root
+  roles:
+    - bootstrap
+
+- name: configure and deploy servers that run apache
+  hosts: apache_servers
+  user: root
+  sudo: yes
+  roles:
+    - common
+    - install_apache
+#    - install_nginx
+    - install_mysql
+    - install_node
+    - install_php
+    - git_dev
+
+- name: setup gitrepo
+  hosts: all
+  user: root
+  sudo: yes
+  roles:
+    - git_project
+#
+- name: configure yetishare
+  hosts: host_yeti
+  user: root
+  sudo: yes
+  roles:
+    - install_yeti_full
+
+- name: deploy node scripts
+  hosts: nodejs_servers
+  user: root
+  sudo: yes
+  roles:
+    - install_node
+#    - setup_apache_proxy
+    - deploy_nodescripts #reedem and signup nodescript
+    - deploy_fileimport
+
+- name: configure frontend minions
+  hosts: host_web
+  user: root
+  sudo: yes   
+  roles:    
+    - web_frontend
+

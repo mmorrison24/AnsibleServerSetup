@@ -1,0 +1,4 @@
+#give each master server an alias, which will allow us to define variables in another file
+[master_servers]
+host_local_exmpl ansible_connection=local ansible_ssh_user=vagrant ansible_ssh_pass=vagrant
+#host_ip_exmpl ansible_ssh_host=192.168.66.66 ansible_ssh_user=vagrant ansible_ssh_pass=vagrant

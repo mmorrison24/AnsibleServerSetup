@@ -1,0 +1,61 @@
+#host_master_exmpl
+---
+main_sitename: website
+main_hostname: domain.com
+main_hostip: 176.31.122.97
+main_hosturl : http://domain.com/
+
+apache_port: 80
+document_root: /var/www
+
+#src settings
+git_repo_ip: 64.90.187.137
+src_sync_dir: 'videoproject/' #relative to where ansible script is run
+sync_with_git: false
+
+#yetishare
+yeti_db_name: 'yetidb'
+yeti_db_username: 'yetidbuser'
+yeti_db_password: 'aSDDD545y^'
+
+yeti_script_zip: '/yeti/File_Hosting_Script_v3_3.zip'
+# apache
+apache_server_admin: 'webmaster@example.com'
+apache_server_alias: '*.*.example.com'
+
+# vsftpd
+vsftpd_anonymous_enable: 'NO'
+vsftpd_local_enable: 'YES'
+vsftpd_write_enable: 'YES'
+vsftpd_local_umask: '002'
+
+# mysql settings
+mysql_db_name: 'yetidb'
+mysql_root_username: 'root'
+mysql_root_password: password
+mysql_db_ip: 'localhost'
+mysql_db_port: '3306'
+
+bitcoin_wallet: 19aVBDfnBSRVVBvVA928MjnHrKkQnesSYt
+bitcoin_plugin_secret: qwer1234
+bitcoin_plugin_siteroot: "http://domain.com/"
+
+MEGA_USERNAME: user
+MEGA_PASSWORD: pass
+
+apache_port: 80
+
+media_dir: "/root/media"
+media_host_dir: {{document_root}}/media
+sync_with_mega: false
+mega_drives:
+ - mega_username: user,
+   mega_password: pass,
+   incoming_dir: "/media/tv_seasons/Gossip\ Girl\ -\ Season\ 1/Gossip\ Girl\",
+   finalsync_dir: "/media/tv_seasons/Gossip\ Girl\ -\ Season\ 1/Gossip\ Girl\",
+   mount_point: dev/sda
+ - mega_username: user,
+   mega_password: pass,
+   incoming_dir: "/media/tv_seasons/Gossip\ Girl\ -\ Season\ 1/Gossip\ Girl\",
+   finalsync_dir: "/media/tv_seasons/Gossip\ Girl\ -\ Season\ 1/Gossip\ Girl\",
+   mount_point: dev/sdb   

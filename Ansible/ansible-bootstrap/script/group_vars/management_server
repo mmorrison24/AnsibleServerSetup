@@ -1,0 +1,16 @@
+---
+git_repos:
+#   - webfrontend_code
+#   - overlord_code
+#   - overlord_code
+#   - overlord_ansible
+#   - srvrfile_code
+#   - srvrfile_ansible
+#   - global_ansible
+#   - code_yeti
+   - videoproject
+
+is_mastergitserver: true
+git_ip: 64.90.187.137
+authorized_keys_file: files/authorized_keys/freelance/
+gitkeys_folder: files/sshAdminKeys/ #folder containging pub and secert ssh keys to be deployed for this instance

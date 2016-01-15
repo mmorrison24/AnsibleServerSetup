@@ -1,0 +1,37 @@
+#host_master_exmpl
+---
+main_sitename: website
+main_hostname: 127.0.0.1
+main_hostip: 127.0.0.1
+main_hosturl : http://localhost
+
+apache_port: 80
+document_root: /var/www
+
+#src settings
+git_repo_ip: 127.0.0.1
+git_repo_name: 'root/full-project.git'
+src_sync_dir: 'project/' #relative to where ansible script is run
+sync_with_git: false
+
+#yetishare
+yeti_db_name: 'db'
+yeti_db_username: 'dbuser'
+yeti_db_password: 'pass'
+
+# apache
+apache_server_admin: 'webmaster@example.com'
+apache_server_alias: '*.*.example.com'
+
+# vsftpd
+vsftpd_anonymous_enable: 'NO'
+vsftpd_local_enable: 'YES'
+vsftpd_write_enable: 'YES'
+vsftpd_local_umask: '002'
+
+# mysql settings
+mysql_db_name: 'yetidb'
+mysql_root_username: 'root'
+mysql_root_password: password
+mysql_db_ip: 'localhost'
+mysql_db_port: '3306'
